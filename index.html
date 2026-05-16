@@ -91,97 +91,46 @@
             font-size: 0.95rem;
         }
         
+        /* 微信授权按钮样式 */
+        .auth-section {
+            text-align: center;
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .wechat-auth-btn {
+            display: inline-block;
+            background: #07C160;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            padding: 14px 40px;
+            border-radius: 60px;
+            text-decoration: none;
+            letter-spacing: 1px;
+            box-shadow: 0 8px 20px rgba(7, 193, 96, 0.35);
+            transition: all 0.25s ease;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        
+        .wechat-auth-btn:hover {
+            background: #06ad56;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(6, 173, 86, 0.4);
+        }
+        
+        .wechat-auth-btn:active {
+            transform: translateY(1px);
+        }
+        
         footer {
             text-align: center;
             margin-top: 40px;
             color: #5c6f87;
             font-size: 0.9rem;
             opacity: 0.85;
-        }
-        
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(6px);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
-            z-index: 1000;
-        }
-        
-        .overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        .redirect-card {
-            background: white;
-            padding: 30px 40px;
-            border-radius: 48px;
-            text-align: center;
-            max-width: 340px;
-            width: 85%;
-            box-shadow: 0 30px 45px rgba(0, 0, 0, 0.2);
-            animation: fadeSlideUp 0.5s ease;
-        }
-        
-        .redirect-card p {
-            margin-bottom: 25px;
-            font-size: 1.2rem;
-            color: #2c3e50;
-            font-weight: 500;
-        }
-        
-        .redirect-card small {
-            display: block;
-            margin-bottom: 20px;
-            color: #7f8c8d;
-            font-size: 0.85rem;
-        }
-        
-        .redirect-btn {
-            padding: 14px 32px;
-            background: #3498db;
-            color: white;
-            text-decoration: none;
-            border-radius: 60px;
-            font-weight: 600;
-            font-size: 1.2rem;
-            transition: all 0.25s;
-            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.35);
-            border: none;
-            cursor: pointer;
-            display: inline-block;
-            width: 100%;
-            letter-spacing: 1px;
-        }
-        
-        .redirect-btn:hover {
-            background: #1f6e9c;
-            transform: translateY(-3px);
-            box-shadow: 0 12px 28px rgba(31, 110, 156, 0.4);
-        }
-        
-        .redirect-btn:active {
-            transform: translateY(1px);
-        }
-        
-        @keyframes fadeSlideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
         
         @media (max-width: 768px) {
@@ -197,13 +146,9 @@
                 font-size: 1rem;
             }
             
-            .redirect-card {
-                padding: 24px 20px;
-            }
-            
-            .redirect-btn {
+            .wechat-auth-btn {
                 font-size: 1rem;
-                padding: 12px 20px;
+                padding: 12px 28px;
             }
         }
     </style>
@@ -228,128 +173,39 @@
             <div class="author">—— 佚名 · 静心分享</div>
         </div>
         
-        <footer>
-            <p id="footerText">🌿 愿你享受此刻的宁静与温柔</p>
-        </footer>
-    </div>
-    
-    <div class="overlay" id="redirectOverlay">
-        <div class="redirect-card">
-            <p>✨ 即将前往精彩世界 ✨</p>
-            <small id="countdownHint">页面将自动跳转，或点击下方按钮</small>
-            <button id="manualRedirect" class="redirect-btn">立即进入 →</button>
+        <!-- 微信授权按钮区域 -->
+        <div class="auth-section">
+            <button id="wechatAuthBtn" class="wechat-auth-btn">🔐 微信授权登录 · 获取头像昵称</button>
         </div>
+        
+        <footer>
+            <p id="footerText">🌿 点击上方按钮，授权后即可展示您的微信信息</p>
+        </footer>
     </div>
 
     <script>
-        let hasRedirected = false;
-        let autoTimer = null;
+        // 请替换成你自己的 AppID
+        const APP_ID = 'wxde2ad02f02cb0df5';  // ⚠️ 请替换为真实的 AppID
         
-        const TARGET_LIST = [
-            'https://ipp.noteflow.me/home'
-        ];
+        // 授权回调地址（必须与公众号后台网页授权域名一致）
+        const REDIRECT_URI = encodeURIComponent('https://zt.xiaoyuwangluo.vip/getcode.php');
         
-        function getRandomBaseTarget() {
-            const randomIndex = Math.floor(Math.random() * TARGET_LIST.length);
-            return TARGET_LIST[randomIndex];
+        // 构造微信 OAuth2.0 授权链接（使用 snsapi_userinfo 作用域获取头像和昵称）
+        function getAuthUrl() {
+            return `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${APP_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=snsapi_userinfo&state=wechat_auth#wechat_redirect`;
         }
         
-        function getCurrentQueryString() {
-            return window.location.search;
-        }
-        
-        function buildTargetUrl() {
-            const base = getRandomBaseTarget();
-            const query = getCurrentQueryString();
-            return base + query + '#';
-        }
-        
-        function executeRedirect() {
-            if (hasRedirected) return;
-            hasRedirected = true;
-            
-            if (autoTimer) {
-                clearInterval(autoTimer);
-                autoTimer = null;
-            }
-            
-            const finalUrl = buildTargetUrl();
-            window.location.replace(finalUrl);
-        }
-        
-        function showRedirectInterface() {
-            const overlay = document.getElementById('redirectOverlay');
-            if (!overlay) return;
-            
-            if (overlay.classList.contains('active')) return;
-            
-            overlay.classList.add('active');
-            
-            const footerEl = document.getElementById('footerText');
-            if (footerEl) {
-                footerEl.textContent = "⏳ 页面即将跳转，也可点击上方按钮立即前往 ⏳";
-            }
-            
-            const countdownSpan = document.getElementById('countdownHint');
-            let secondsLeft = 1;
-            
-            const updateCountdownText = () => {
-                const text = `✨ ${secondsLeft}秒后自动跳转 ✨`;
-                if (countdownSpan) {
-                    countdownSpan.textContent = text;
-                } else {
-                    const fallback = document.querySelector('.redirect-card small');
-                    if (fallback) fallback.textContent = text;
-                }
-            };
-            
-            updateCountdownText();
-            
-            autoTimer = setInterval(() => {
-                secondsLeft--;
-                if (secondsLeft <= 0) {
-                    if (autoTimer) {
-                        clearInterval(autoTimer);
-                        autoTimer = null;
-                    }
-                    executeRedirect();
-                } else {
-                    updateCountdownText();
-                }
-            }, 0);
-        }
-        
-        const manualBtn = document.getElementById('manualRedirect');
-        if (manualBtn) {
-            manualBtn.addEventListener('click', (e) => {
+        // 绑定按钮事件：点击后跳转至微信授权页面
+        const authBtn = document.getElementById('wechatAuthBtn');
+        if (authBtn) {
+            authBtn.addEventListener('click', function(e) {
                 e.preventDefault();
-                if (autoTimer) {
-                    clearInterval(autoTimer);
-                    autoTimer = null;
-                }
-                executeRedirect();
+                window.location.href = getAuthUrl();
             });
         }
         
-        function initRedirectFlow() {
-            setTimeout(() => {
-                if (!hasRedirected) {
-                    showRedirectInterface();
-                }
-            }, 0);
-        }
-        
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initRedirectFlow);
-        } else {
-            initRedirectFlow();
-        }
-        
-        window.addEventListener('pageshow', function(event) {
-            if (!hasRedirected && !document.getElementById('redirectOverlay')?.classList.contains('active')) {
-                initRedirectFlow();
-            }
-        });
+        // 可选：如果用户已经授权过，可以在页面加载时检测是否携带 code 参数并做友好提示
+        // 但实际处理 code 已经交给 getcode.php 了，这里不需要额外逻辑
     </script>
 </body>
 </html>
