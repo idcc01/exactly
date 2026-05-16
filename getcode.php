@@ -82,7 +82,7 @@ if (isset($userInfo['errcode'])) {
 // 3. 整理要传递的用户数据
 $userData = [
     'nickname'   => $userInfo['nickname'],
-    'headimgurl' => $userInfo['headimgurl'],
+    'avatar'     => $userInfo['headimgurl'],   // 改名
     'sex'        => $userInfo['sex'] ?? 0,
     'openid'     => $openId,
 ];
