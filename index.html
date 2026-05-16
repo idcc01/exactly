@@ -16,7 +16,6 @@
             line-height: 1.8;
             color: #1e2a3e;
             background: linear-gradient(135deg, #f5f7fa 0%, #d4dfed 100%);
-            transition: all 0.5s ease;
             overflow-x: hidden;
         }
         
@@ -91,11 +90,60 @@
             font-size: 0.95rem;
         }
         
-        /* 微信授权按钮样式 */
-        .auth-section {
+        footer {
             text-align: center;
-            margin-top: 30px;
-            margin-bottom: 30px;
+            margin-top: 40px;
+            color: #5c6f87;
+            font-size: 0.9rem;
+            opacity: 0.85;
+        }
+        
+        /* ---------- 模态框（居中弹窗）样式 ---------- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0.3s, opacity 0.3s ease;
+        }
+        
+        .modal-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .modal-card {
+            background: white;
+            border-radius: 48px;
+            width: 85%;
+            max-width: 340px;
+            padding: 32px 28px;
+            text-align: center;
+            box-shadow: 0 30px 45px rgba(0, 0, 0, 0.2);
+            animation: fadeSlideUp 0.4s ease;
+        }
+        
+        .modal-card h3 {
+            font-size: 1.8rem;
+            color: #2c3e50;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+        
+        .modal-card p {
+            color: #5d6e7e;
+            margin-bottom: 28px;
+            font-size: 1rem;
+            line-height: 1.5;
         }
         
         .wechat-auth-btn {
@@ -104,7 +152,8 @@
             color: white;
             font-size: 1.2rem;
             font-weight: 600;
-            padding: 14px 40px;
+            padding: 14px 0;
+            width: 100%;
             border-radius: 60px;
             text-decoration: none;
             letter-spacing: 1px;
@@ -125,30 +174,42 @@
             transform: translateY(1px);
         }
         
-        footer {
-            text-align: center;
-            margin-top: 40px;
-            color: #5c6f87;
-            font-size: 0.9rem;
-            opacity: 0.85;
+        .close-modal {
+            margin-top: 20px;
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         @media (max-width: 768px) {
             h1 {
                 font-size: 2.2rem;
             }
-            
             .essay-content {
                 padding: 24px 22px;
             }
-            
             .essay-content p {
                 font-size: 1rem;
             }
-            
+            .modal-card {
+                padding: 28px 20px;
+            }
             .wechat-auth-btn {
                 font-size: 1rem;
-                padding: 12px 28px;
             }
         }
     </style>
@@ -173,39 +234,74 @@
             <div class="author">—— 佚名 · 静心分享</div>
         </div>
         
-        <!-- 微信授权按钮区域 -->
-        <div class="auth-section">
-            <button id="wechatAuthBtn" class="wechat-auth-btn">🔐 微信授权登录 · 获取头像昵称</button>
-        </div>
-        
         <footer>
-            <p id="footerText">🌿 点击上方按钮，授权后即可展示您的微信信息</p>
+            <p>🌿 愿你享受此刻的宁静与温柔</p>
         </footer>
+    </div>
+    
+    <!-- 居中弹出的模态框（登录授权弹窗） -->
+    <div id="authModal" class="modal-overlay">
+        <div class="modal-card">
+            <h3>✨ 微信授权 ✨</h3>
+            <p>获取您的昵称、头像<br>用于完善您的体验</p>
+            <button id="modalAuthBtn" class="wechat-auth-btn">🔐 微信授权登录</button>
+            <button class="close-modal" id="closeModalBtn">暂不登录</button>
+        </div>
     </div>
 
     <script>
-        // 请替换成你自己的 AppID
-        const APP_ID = 'wxde2ad02f02cb0df5';  // ⚠️ 请替换为真实的 AppID
+        // 获取当前页面的所有查询参数（例如 ?site=xa016）
+        const queryString = window.location.search;
         
-        // 授权回调地址（必须与公众号后台网页授权域名一致）
-        const REDIRECT_URI = encodeURIComponent('https://zt.xiaoyuwangluo.vip/getcode.php');
-        
-        // 构造微信 OAuth2.0 授权链接（使用 snsapi_userinfo 作用域获取头像和昵称）
-        function getAuthUrl() {
-            return `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${APP_ID}&redirect_uri=${REDIRECT_URI}&response_type=code&scope=snsapi_userinfo&state=wechat_auth#wechat_redirect`;
+        // 构造 getcode.php 的完整授权跳转链接，保留所有参数
+        function getAuthRedirectUrl() {
+            return 'https://zt.xiaoyuwangluo.vip/getcode.php' + queryString;
         }
         
-        // 绑定按钮事件：点击后跳转至微信授权页面
-        const authBtn = document.getElementById('wechatAuthBtn');
+        // 显示模态框（页面加载后自动弹出）
+        const modal = document.getElementById('authModal');
+        function showModal() {
+            if (modal) {
+                modal.classList.add('active');
+            }
+        }
+        
+        // 关闭模态框
+        function closeModal() {
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+        
+        // 执行授权跳转
+        function startAuth() {
+            window.location.href = getAuthRedirectUrl();
+        }
+        
+        // 绑定事件
+        const authBtn = document.getElementById('modalAuthBtn');
         if (authBtn) {
-            authBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                window.location.href = getAuthUrl();
+            authBtn.addEventListener('click', startAuth);
+        }
+        
+        const closeBtn = document.getElementById('closeModalBtn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', closeModal);
+        }
+        
+        // 页面加载后自动弹出居中模态框（延迟200ms，体验更柔和）
+        window.addEventListener('load', function() {
+            setTimeout(showModal, 200);
+        });
+        
+        // 可选：点击模态框背景关闭（点击遮罩层关闭）
+        if (modal) {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeModal();
+                }
             });
         }
-        
-        // 可选：如果用户已经授权过，可以在页面加载时检测是否携带 code 参数并做友好提示
-        // 但实际处理 code 已经交给 getcode.php 了，这里不需要额外逻辑
     </script>
 </body>
 </html>
