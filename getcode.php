@@ -1,19 +1,23 @@
 <?php
-// 启用错误显示（调试用，上线后可注释或删除）
+// 启用错误显示（调试用，上线后可注释）
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// 启动 session（可选，用于临时存储）
 session_start();
 
 // ==================== 配置区域 ====================
-$appId     = 'wxde2ad02f02cb0df5';          // 微信公众号 AppID
-$appSecret = 'f27a1e32177f425fe8c940dc8d063b32';      // 微信公众号 AppSecret
+$appId     = 'wxde2ad02f02cb0df5';           // 微信公众号 AppID
+$appSecret = 'f27a1e32177f425fe8c940dc8d063b32';       // 微信公众号 AppSecret
 
-// 目标网站配置（接收用户信息和推广参数）
-$targetDomain = 'ipp.noteflow.me';   // 例如 'example.com'，不要带 http://
-$targetPath   = '/home';    // 例如 '/oauth/callback'
+// 主站 API 地址（用于后端登录）
+$mainApiUrl = 'https://ipp.noteflow.me/api/auth/wechat/bridge';
+
+// 主站首页地址（登录成功后跳转）
+$homeUrl = 'https://ipp.noteflow.me/home';
+
+// 签名密钥（与主站约定，用于验签）
+$secret = 'your-pre-shared-secret-key';   // 请修改为与主站一致的密钥
 // =================================================
 
 // 当前脚本的完整 URL（用于微信回调）
@@ -26,7 +30,7 @@ if (!isset($_GET['code'])) {
     // 将推广参数编码后放入 state（base64 + json）
     $state = base64_encode(json_encode($promoParams));
     
-    // 回调地址：当前脚本的完整 URL（必须与公众号后台配置的域名一致）
+    // 回调地址：当前脚本的完整 URL
     $redirectUri = $currentUrl;
     
     // 构造微信授权链接（使用 snsapi_userinfo 获取头像昵称）
@@ -79,10 +83,10 @@ if (isset($userInfo['errcode'])) {
     die('获取用户信息失败：' . $userInfo['errmsg']);
 }
 
-// 3. 整理要传递的用户数据
+// 3. 整理要传递给主站 API 的用户数据
 $userData = [
     'nickname'   => $userInfo['nickname'],
-    'avatar'     => $userInfo['headimgurl'],   // 改名
+    'avatar'     => $userInfo['headimgurl'],
     'sex'        => $userInfo['sex'] ?? 0,
     'openid'     => $openId,
 ];
@@ -90,16 +94,38 @@ if (!empty($unionId)) {
     $userData['unionid'] = $unionId;
 }
 
-// 4. 合并推广参数（推广参数优先级高于用户数据，但这里不会覆盖，因为字段名不同）
-$finalParams = array_merge($userData, $promoParams);
+// 合并推广参数
+$userData = array_merge($userData, $promoParams);
 
-// 5. 构造跳转到目标网站的 URL
-$targetUrl = 'https://' . $targetDomain . $targetPath . '?' . http_build_query($finalParams);
+// 4. 生成签名（防止参数被篡改）
+ksort($userData);
+$userData['ts'] = time();
+$signStr = http_build_query($userData);
+$userData['sign'] = hash_hmac('sha256', $signStr, $secret);
 
-// 可选：记录日志或存储到 session
-$_SESSION['wechat_user'] = $userData;
-$_SESSION['promo'] = $promoParams;
+// 5. 调用主站后端 API 完成登录（POST 请求）
+$postData = http_build_query($userData);
+$options = [
+    'http' => [
+        'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+        'method'  => 'POST',
+        'content' => $postData,
+        'timeout' => 10,
+    ],
+];
+$context = stream_context_create($options);
+$result = file_get_contents($mainApiUrl, false, $context);
 
-// 执行跳转
-header('Location: ' . $targetUrl);
-exit;
+if ($result === false) {
+    die('调用主站 API 失败，请稍后重试');
+}
+
+$response = json_decode($result, true);
+if ($response && isset($response['code']) && $response['code'] === 200) {
+    // 登录成功，重定向到主站首页
+    header('Location: ' . $homeUrl);
+    exit;
+} else {
+    $errorMsg = $response['msg'] ?? '未知错误';
+    die('登录失败：' . $errorMsg);
+}
