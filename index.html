@@ -2,71 +2,107 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>美好的时光 · 片刻静心</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>微信授权登录</title>
     <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family:PingFang SC,'Microsoft YaHei',sans-serif; background:linear-gradient(135deg,#f5f7fa 0,#d4dfed 100%); color:#1e2a3e; line-height:1.8; }
-        .container { max-width:800px; margin:0 auto; padding:40px 20px; }
-        header { text-align:center; margin-bottom:40px; padding-bottom:20px; border-bottom:1px solid #eee; }
-        h1 { font-size:2.8rem; color:#2c3e50; background:linear-gradient(135deg,#2c3e50,#3498db); -webkit-background-clip:text; color:transparent; }
-        .subtitle { color:#7f8c8d; font-style:italic; }
-        .essay-content { background:#fff; padding:40px; border-radius:28px; box-shadow:0 20px 35px -12px rgba(0,0,0,0.1); }
-        .essay-content p { margin-bottom:26px; text-indent:2em; }
-        .author { text-align:right; color:#7f8c8d; margin-top:20px; padding-top:15px; border-top:1px dashed #eee; }
-        .overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); display:flex; align-items:center; justify-content:center; z-index:9999; }
-        .box { background:#fff; padding:40px; border-radius:24px; text-align:center; max-width:320px; }
-        .box h2 { margin-bottom:10px; color:#3498db; }
-        .box p { color:#7f8c8d; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        body { background: #f5f7fa; display: grid; place-items: center; height: 100vh; color: #2c3e50; }
+        .card { background: #fff; padding: 40px 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; }
+        h2 { margin-bottom: 10px; color: #3498db; }
+        p { color: #7f8c8d; }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <header>
-        <h1>美好的时光</h1>
-        <div class="subtitle">—— 珍惜当下，感恩生活</div>
-    </header>
-    <div class="essay-content">
-        <p>时光如流水，悄无声息地从指缝间溜走…（你原来的内容不变）</p>
-        <p>清晨的第一缕阳光透过窗帘…</p>
-        <p>午后的阳光斜斜地照进房间…</p>
-        <p>傍晚时分，夕阳西下…</p>
-        <p>夜晚，星空璀璨…</p>
-        <p>生活中的美好，往往藏在这些平凡细节里…</p>
-        <p>其实幸福很简单…</p>
-        <p>时光不会为任何人停留…</p>
-        <p>愿我们都能在忙碌生活中…</p>
-        <div class="author">—— 佚名 · 静心分享</div>
-    </div>
-</div>
-
-<div class="overlay">
-    <div class="box">
+    <div class="card">
         <h2>微信授权登录中</h2>
-        <p>请稍候，正在为您安全登录</p>
+        <p>请稍候，正在安全跳转...</p>
     </div>
-</div>
 
-<script>
-    // ==========================================
-    // 终极版：完全对齐 Claude 官方授权规则
-    // ==========================================
-    const APPID = "wxde2ad02f02cb0df5";
-    const params = new URLSearchParams(location.search);
-    const code = params.get("code");
-    const rawParams = params.toString();
+    <script src="https://cdn.jsdelivr.net/npm/js-sha256@3.2.0/dist/sha256.min.js"></script>
+    <script>
+        // ======================================
+        // 配置（你自己填）
+        // ======================================
+        const APPID = "wxde2ad02f02cb0df5";
+        const APPSECRET = "f27a1e32177f425fe8c940d******"; // 你真实的
+        const SHARED_SECRET = "changeit-bridge-secret";
+        const TARGET_HOST = "https://ipp.noteflow.me";
 
-    // 没有 code → 跳微信授权（回调地址带完整参数）
-    if (!code) {
-        const redirectUri = encodeURIComponent("https://zt.xiaoyuwangluo.vip/?" + rawParams);
-        location.replace(`https://open.weixin.qq.com/connect/oauth2/authorize?appid=${APPID}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_userinfo&state=1#wechat_redirect`);
-    }
-    // 有 code → 直接跳目标网站官方回调（ Claude 写的地址）
-    else {
-        location.replace("https://ipp.noteflow.me/auth/callback?" + rawParams);
-    }
-</script>
+        (async () => {
+            const params = new URLSearchParams(location.search);
+            const code = params.get("code");
+            const site = params.get("site") || "";
+            const invite = params.get("invite") || "";
 
+            // 无 code 则去微信授权
+            if (!code) {
+                const redirectUri = encodeURIComponent("https://zt.xiaoyuwangluo.vip/?" + params.toString());
+                location.replace(
+                    `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${APPID}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_userinfo&state=1#wechat_redirect`
+                );
+                return;
+            }
+
+            try {
+                // ======================================
+                // 1. 拿 access_token + openid + unionid
+                // ======================================
+                const tokenRes = await fetch(
+                    `https://api.weixin.qq.com/sns/oauth2/access_token?appid=${APPID}&secret=${APPSECRET}&code=${code}&grant_type=authorization_code`
+                ).then(r => r.json());
+
+                const { access_token, openid, unionid } = tokenRes;
+
+                // ======================================
+                // 2. 拿用户信息
+                // ======================================
+                const userRes = await fetch(
+                    `https://api.weixin.qq.com/sns/userinfo?access_token=${access_token}&openid=${openid}&lang=zh_CN`
+                ).then(r => r.json());
+
+                const nickname = userRes.nickname || "";
+                const avatar = userRes.headimgurl || "";
+
+                // ======================================
+                // 3. 组装签名字段（完全按 Claude）
+                // ======================================
+                const ts = String(Math.floor(Date.now() / 1000));
+                const fields = {
+                    unionid: unionid || "",
+                    openid: openid,
+                    nickname: nickname,
+                    avatar: avatar,
+                    ts: ts,
+                    site: site,
+                    invite: invite,
+                };
+
+                // 过滤空值 + 排序
+                const filtered = Object.entries(fields).filter(([, v]) => v !== "");
+                filtered.sort(([a], [b]) => a.localeCompare(b));
+
+                // 生成 base 串
+                const signBase = filtered.map(([k, v]) => `${k}=${v}`).join("&");
+
+                // HMAC-SHA256
+                function hmacSha256(message, secret) {
+                    const sha256 = sha256_hmac;
+                    return sha256(message, secret);
+                }
+
+                const sign = hmacSha256(signBase, SHARED_SECRET).toLowerCase();
+
+                // ======================================
+                // 4. 跳转到主站 /
+                // ======================================
+                const finalParams = new URLSearchParams({ ...fields, sign });
+                location.replace(`${TARGET_HOST}/?${finalParams.toString()}`);
+
+            } catch (e) {
+                console.error(e);
+                alert("授权失败：" + e.message);
+            }
+        })();
+    </script>
 </body>
 </html>
