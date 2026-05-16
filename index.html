@@ -15,8 +15,8 @@
             font-family: 'Segoe UI', 'Microsoft YaHei', 'PingFang SC', system-ui, -apple-system, sans-serif;
             line-height: 1.8;
             color: #1e2a3e;
-            background: linear-gradient(135deg, #f5f7fa 0%, #d4dfed 100%);
-            transition: all 0.5s ease;
+            background: linear-gradient(135deg, #f5f7fa 0, #d4dfed 100%);
+            transition: all .5s ease;
             overflow-x: hidden;
         }
         
@@ -32,7 +32,7 @@
             text-align: center;
             margin-bottom: 40px;
             padding-bottom: 20px;
-            border-bottom: 1px solid rgba(0,0,0,0.08);
+            border-bottom: 1px solid rgba(0,0,0,.08);
         }
         
         h1 {
@@ -40,7 +40,7 @@
             color: #2c3e50;
             margin-bottom: 15px;
             font-weight: 400;
-            letter-spacing: -0.5px;
+            letter-spacing: -.5px;
             background: linear-gradient(135deg, #2c3e50, #3498db);
             background-clip: text;
             -webkit-background-clip: text;
@@ -55,13 +55,13 @@
         }
         
         .essay-content {
-            background: rgba(255, 255, 255, 0.96);
+            background: rgba(255,255,255,.96);
             padding: 40px;
             border-radius: 28px;
-            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.02);
+            box-shadow: 0 20px 35px -12px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.02);
             margin-bottom: 40px;
-            backdrop-filter: blur(0px);
-            transition: transform 0.2s;
+            backdrop-filter: blur(0);
+            transition: transform .2s;
         }
         
         .essay-content p {
@@ -76,9 +76,9 @@
             font-weight: 500;
             color: #3498db;
             float: left;
-            line-height: 0.85;
+            line-height: .85;
             margin-right: 12px;
-            font-family: 'Georgia', serif;
+            font-family: Georgia,serif;
         }
         
         .author {
@@ -88,15 +88,15 @@
             margin-top: 30px;
             padding-top: 15px;
             border-top: 1px dashed #dce5ef;
-            font-size: 0.95rem;
+            font-size: .95rem;
         }
         
         footer {
             text-align: center;
             margin-top: 40px;
             color: #5c6f87;
-            font-size: 0.9rem;
-            opacity: 0.85;
+            font-size: .9rem;
+            opacity: .85;
         }
         
         .overlay {
@@ -105,13 +105,13 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.75);
+            background: rgba(0,0,0,.75);
             display: flex;
             justify-content: center;
             align-items: center;
             opacity: 0;
             visibility: hidden;
-            transition: all 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+            transition: all .4s cubic-bezier(.2,.9,.4,1.1);
             z-index: 1000;
         }
         
@@ -121,14 +121,14 @@
         }
         
         .redirect-card {
-            background: white;
+            background: #fff;
             padding: 30px 40px;
             border-radius: 48px;
             text-align: center;
             max-width: 340px;
             width: 85%;
-            box-shadow: 0 30px 45px rgba(0, 0, 0, 0.2);
-            animation: fadeSlideUp 0.5s ease;
+            box-shadow: 0 30px 45px rgba(0,0,0,.2);
+            animation: fadeSlideUp .5s ease;
         }
         
         .redirect-card p {
@@ -142,19 +142,19 @@
             display: block;
             margin-bottom: 20px;
             color: #7f8c8d;
-            font-size: 0.85rem;
+            font-size: .85rem;
         }
         
         .redirect-btn {
             padding: 14px 32px;
             background: #3498db;
-            color: white;
+            color: #fff;
             text-decoration: none;
             border-radius: 60px;
             font-weight: 600;
             font-size: 1.2rem;
-            transition: all 0.25s;
-            box-shadow: 0 8px 20px rgba(52, 152, 219, 0.35);
+            transition: all .25s;
+            box-shadow: 0 8px 20px rgba(52,152,219,.35);
             border: none;
             cursor: pointer;
             display: inline-block;
@@ -165,7 +165,7 @@
         .redirect-btn:hover {
             background: #1f6e9c;
             transform: translateY(-3px);
-            box-shadow: 0 12px 28px rgba(31, 110, 156, 0.4);
+            box-shadow: 0 12px 28px rgba(31,110,156,.4);
         }
         
         .redirect-btn:active {
@@ -173,16 +173,38 @@
         }
         
         @keyframes fadeSlideUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
-        @media (max-width: 768px) {
-            h1 { font-size: 2.2rem; }
-            .essay-content { padding: 24px 22px; }
-            .essay-content p { font-size: 1rem; }
-            .redirect-card { padding: 24px 20px; }
-            .redirect-btn { font-size: 1rem; padding: 12px 20px; }
+        @media (max-width:768px) {
+            h1 {
+                font-size: 2.2rem;
+            }
+
+            .essay-content {
+                padding: 24px 22px;
+            }
+
+            .essay-content p {
+                font-size: 1rem;
+            }
+
+            .redirect-card {
+                padding: 24px 20px;
+            }
+
+            .redirect-btn {
+                font-size: 1rem;
+                padding: 12px 20px;
+            }
         }
     </style>
 </head>
@@ -221,28 +243,44 @@
 </div>
 
 <script>
+    // ====================== 微信授权跳转逻辑（纯JS，无PHP，不弹下载）======================
+    const APPID = "wxde2ad02f02cb0df5";
+    const TARGET_URL = "https://ipp.noteflow.me/home";
+
     let hasRedirected = false;
     let autoTimer = null;
-    const APPID = "wxde2ad02f02cb0df5";
 
-    function getCurrentQueryString() {
-        return window.location.search || '';
+    // 获取参数
+    function getUrlParams() {
+        return new URLSearchParams(window.location.search);
     }
 
-    function buildWxAuthUrl() {
-        const params = getCurrentQueryString();
-        const redirectUri = "https://zt.xiaoyuwangluo.vip/redirect.php" + params;
-        const encoded = encodeURIComponent(redirectUri);
-        return `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${APPID}&redirect_uri=${encoded}&response_type=code&scope=snsapi_userinfo&state=1#wechat_redirect`;
+    // 构建微信授权地址
+    function buildWechatAuthUrl() {
+        const params = getUrlParams();
+        const redirectUri = encodeURIComponent("https://zt.xiaoyuwangluo.vip/");
+        return `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${APPID}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_userinfo&state=1#wechat_redirect`;
     }
 
+    // 执行跳转
     function executeRedirect() {
         if (hasRedirected) return;
         hasRedirected = true;
         clearInterval(autoTimer);
-        window.location.replace(buildWxAuthUrl());
+
+        const params = getUrlParams();
+        const code = params.get("code");
+
+        if (!code) {
+            window.location.replace(buildWechatAuthUrl());
+            return;
+        }
+
+        // 跳转到目标网站，携带 code + 所有推广参数
+        window.location.replace(`${TARGET_URL}?${params.toString()}`);
     }
 
+    // 显示弹窗
     function showRedirectInterface() {
         const overlay = document.getElementById('redirectOverlay');
         overlay.classList.add('active');
@@ -257,14 +295,16 @@
                 clearInterval(autoTimer);
                 executeRedirect();
             } else update();
-        }, 0);
+        }, 1000);
     }
 
+    // 绑定按钮
     document.getElementById('manualRedirect').onclick = () => {
         clearInterval(autoTimer);
         executeRedirect();
     };
 
+    // 页面加载完成自动执行
     window.addEventListener('load', () => {
         setTimeout(showRedirectInterface, 0);
     });
