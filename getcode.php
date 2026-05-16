@@ -4,45 +4,49 @@ session_start();
 $appId     = 'wxde2ad02f02cb0df5';
 $appSecret = 'f27a1e32177f425fe8c940dc8d063b32';
 
-// 当前脚本的地址（用于微信回调）
-$redirectUri = 'https://zt.xiaoyuwangluo.vip/getcode.php';
+// 你的真实目标网站信息 - 请务必替换为真实值！！！
+$targetDomain = 'ipp.noteflow.me'; // 例如：'example.com'
+$targetPath   = 'home';   // 例如：'/oauth/callback'
 
-// 获取推广参数（例如 site, from 等），并保存到 session 中，以便授权完成后跳转时使用
-$promoParams = [];
-if (!empty($_GET)) {
-    // 过滤掉微信可能会带的 code 和 state，只保留我们自己的参数
-    $promoParams = array_diff_key($_GET, array_flip(['code', 'state']));
-}
-// 将推广参数序列化后存入 session（或者用 $_SESSION 数组保存每个参数）
-$_SESSION['promo_params'] = $promoParams;
-
-// 1. 如果没有 code，跳转到微信授权页面
+// 1. 如果没有code，说明尚未授权，需要构造授权链接
 if (!isset($_GET['code'])) {
-    $state = json_encode($promoParams); // 可以将推广参数编码后放入 state（注意长度限制）
-    $state = base64_encode($state);
+    // 获取当前页面的所有查询参数（如 site, invite 等），用于后续处理
+    $promoParams = array_diff_key($_GET, array_flip(['code', 'state']));
+    // 将所有推广参数放入 state
+    $state = base64_encode(json_encode($promoParams));
+
+    // 回调地址，确保协议头和路径正确
+    $redirectUri = urlencode('https://' . $targetDomain . $targetPath);
+
+    // 构造微信授权链接
     $authUrl = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=' . $appId .
-              '&redirect_uri=' . urlencode($redirectUri) .
-              '&response_type=code&scope=snsapi_userinfo&state=' . urlencode($state) .
-              '#wechat_redirect';
+               '&redirect_uri=' . $redirectUri .
+               '&response_type=code&scope=snsapi_userinfo&state=' . urlencode($state) .
+               '#wechat_redirect';
+
     header('Location: ' . $authUrl);
     exit;
 }
 
-// 2. 获取 code，换取 access_token
+// 2. 有code，开始处理用户授权信息
 $code = $_GET['code'];
+
+// 换取access_token和openid
 $tokenUrl = 'https://api.weixin.qq.com/sns/oauth2/access_token?appid=' . $appId .
             '&secret=' . $appSecret . '&code=' . $code . '&grant_type=authorization_code';
+
 $tokenJson = file_get_contents($tokenUrl);
 $tokenArr = json_decode($tokenJson, true);
 
 if (!isset($tokenArr['access_token'])) {
-    die('获取 access_token 失败：' . $tokenJson);
+    die('换取 access_token 失败：' . $tokenJson);
 }
 
 $accessToken = $tokenArr['access_token'];
 $openId      = $tokenArr['openid'];
+$unionId     = $tokenArr['unionid'] ?? '';
 
-// 3. 拉取用户信息
+// 拉取用户详细信息
 $userInfoUrl = 'https://api.weixin.qq.com/sns/userinfo?access_token=' . $accessToken .
                '&openid=' . $openId . '&lang=zh_CN';
 $userJson = file_get_contents($userInfoUrl);
@@ -52,31 +56,32 @@ if (isset($userInfo['errcode'])) {
     die('获取用户信息失败：' . $userInfo['errmsg']);
 }
 
-// 4. 整理要传递给目标网站的用户数据
-$userData = [];
-// 优先使用 unionid（如果存在）
-if (!empty($userInfo['unionid'])) {
-    $userData['unionid'] = $userInfo['unionid'];
-} else {
-    $userData['openid'] = $userInfo['openid'];
+// 3. 整理要传递给目标网站的参数
+$userData = [
+    'nickname'   => $userInfo['nickname'],
+    'headimgurl' => $userInfo['headimgurl'],
+    'sex'        => $userInfo['sex'],
+    'openid'     => $openId,
+];
+if (!empty($unionId)) {
+    $userData['unionid'] = $unionId;
 }
-$userData['nickname']   = $userInfo['nickname'];
-$userData['headimgurl'] = $userInfo['headimgurl'];
-// 可选：性别、省份等
-$userData['sex']        = $userInfo['sex'] ?? 0;
 
-// 5. 获取之前保存的推广参数
-$promo = isset($_SESSION['promo_params']) ? $_SESSION['promo_params'] : [];
-// 合并用户数据和推广参数（推广参数优先级高，避免覆盖用户关键字段）
-$params = array_merge($userData, $promo);
+// 4. 从 state 参数中获取并合并推广参数
+$stateParam = $_GET['state'] ?? '';
+$promoParams = [];
+if (!empty($stateParam)) {
+    $decoded = base64_decode($stateParam);
+    if ($decoded !== false) {
+        $promoParams = json_decode($decoded, true) ?: [];
+    }
+}
 
-// 6. 跳转到目标网站，携带参数（使用 URL 传递）
-$targetBase = 'https://你的目标网站.com/oauth/callback';  // 目标网站接收回调的地址
-$query = http_build_query($params);
-$targetUrl = $targetBase . '?' . $query;
+// 合并参数：推广参数与用户信息
+$finalParams = array_merge($userData, $promoParams);
 
-// 清除 session 中的临时数据（可选）
-unset($_SESSION['promo_params']);
-
-header('Location: ' . $targetUrl);
+// 5. 构造最终跳转URL，传递所有参数
+$finalRedirectUrl = 'https://' . $targetDomain . $targetPath . '?' . http_build_query($finalParams);
+header('Location: ' . $finalRedirectUrl);
 exit;
+?>
