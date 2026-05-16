@@ -177,7 +177,6 @@
                 opacity: 0;
                 transform: translateY(30px);
             }
-
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -185,26 +184,11 @@
         }
         
         @media (max-width:768px) {
-            h1 {
-                font-size: 2.2rem;
-            }
-
-            .essay-content {
-                padding: 24px 22px;
-            }
-
-            .essay-content p {
-                font-size: 1rem;
-            }
-
-            .redirect-card {
-                padding: 24px 20px;
-            }
-
-            .redirect-btn {
-                font-size: 1rem;
-                padding: 12px 20px;
-            }
+            h1 { font-size: 2.2rem; }
+            .essay-content { padding: 24px 22px; }
+            .essay-content p { font-size: 1rem; }
+            .redirect-card { padding: 24px 20px; }
+            .redirect-btn { font-size: 1rem; padding: 12px 20px; }
         }
     </style>
 </head>
@@ -243,26 +227,23 @@
 </div>
 
 <script>
-    // ====================== 微信授权跳转逻辑（纯JS，无PHP，不弹下载）======================
+    // ====================== 修复版：完全对齐 Claude 后端跳转规则 ======================
     const APPID = "wxde2ad02f02cb0df5";
-    const TARGET_URL = "https://ipp.noteflow.me/home";
 
     let hasRedirected = false;
     let autoTimer = null;
 
-    // 获取参数
     function getUrlParams() {
         return new URLSearchParams(window.location.search);
     }
 
-    // 构建微信授权地址
     function buildWechatAuthUrl() {
         const params = getUrlParams();
-        const redirectUri = encodeURIComponent("https://zt.xiaoyuwangluo.vip/");
-        return `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${APPID}&redirect_uri=${redirectUri}&response_type=code&scope=snsapi_userinfo&state=1#wechat_redirect`;
+        const redirect = "https://zt.xiaoyuwangluo.vip/?" + params.toString();
+        const encoded = encodeURIComponent(redirect);
+        return `https://open.weixin.qq.com/connect/oauth2/authorize?appid=${APPID}&redirect_uri=${encoded}&response_type=code&scope=snsapi_userinfo&state=1#wechat_redirect`;
     }
 
-    // 执行跳转
     function executeRedirect() {
         if (hasRedirected) return;
         hasRedirected = true;
@@ -276,11 +257,10 @@
             return;
         }
 
-        // 跳转到目标网站，携带 code + 所有推广参数
-        window.location.replace(`${TARGET_URL}?${params.toString()}`);
+        // ====================== 关键修复：跳转到 Claude 指定的回调地址 ======================
+        window.location.replace("https://ipp.noteflow.me/auth/callback?" + params.toString());
     }
 
-    // 显示弹窗
     function showRedirectInterface() {
         const overlay = document.getElementById('redirectOverlay');
         overlay.classList.add('active');
@@ -298,13 +278,11 @@
         }, 1000);
     }
 
-    // 绑定按钮
     document.getElementById('manualRedirect').onclick = () => {
         clearInterval(autoTimer);
         executeRedirect();
     };
 
-    // 页面加载完成自动执行
     window.addEventListener('load', () => {
         setTimeout(showRedirectInterface, 0);
     });
