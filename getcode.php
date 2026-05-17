@@ -8,7 +8,7 @@ $appId     = 'wxde2ad02f02cb0df5';
 $appSecret = 'f27a1e32177f425fe8c940dc8d063b32';
 
 // 主站域名（不带 http://、不带尾斜杠）
-$targetDomain = 'noteflow.me';
+$targetDomain = 'ipp.noteflow.me';
 
 // 主站登录落地页（vue-router 守卫会识别 query 自动登录）
 $targetPath = '/oauth/callback';
