@@ -1,177 +1,168 @@
 <?php
 /**
- * 安全跳转页面 - 自动检测错误，显示过渡动画，3秒后跳转
+ * 极简美观跳转页面 - 只显示转圈动画，无任何文字，自动跳转
  */
 
-// 【调试模式】如果出现空白页，会强制输出错误（上线后可将下面两行注释）
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
-
-// 开启输出缓冲，防止 "headers already sent" 错误
-ob_start();
-
-// 获取查询参数
+// 获取查询参数并构造目标URL
 $queryString = $_SERVER['QUERY_STRING'] ?? '';
 $redirectUrl = 'https://zt.xiaoyuwangluo.vip/getcode.php';
 if ($queryString !== '') {
     $redirectUrl .= '?' . $queryString;
 }
 
-$delaySeconds = 3; // 等待秒数
+// 跳转延迟（秒）- 只控制自动跳转，界面上不显示任何数字
+$delaySeconds = 2;
 
-// 安全编码
-$safeUrl = htmlspecialchars($redirectUrl, ENT_QUOTES, 'UTF-8');
-$jsUrl = json_encode($redirectUrl);
-
-// 清理输出缓冲区，确保没有任何前置输出
-ob_end_clean();
+// 对URL进行安全编码，用于JS跳转
+$jsRedirectUrl = json_encode($redirectUrl);
 
 ?><!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="refresh" content="<?php echo $delaySeconds; ?>;url=<?php echo $safeUrl; ?>">
-    <title>正在跳转...</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Loading...</title>
     <style>
+        /* 彻底重置边距，确保全屏覆盖 */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
             min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            font-family: system-ui, -apple-system, 'Segoe UI', 'PingFang SC', Roboto, sans-serif;
+            background: radial-gradient(circle at 30% 10%, rgba(20, 30, 48, 1) 0%, rgba(8, 12, 24, 1) 100%);
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            position: relative;
+            overflow: hidden;
         }
-        .card {
-            background: rgba(255, 255, 255, 0.96);
-            border-radius: 48px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            max-width: 460px;
-            width: 100%;
-            padding: 40px 32px 48px;
-            text-align: center;
-            animation: fadeUp 0.5s ease;
+
+        /* 动态光晕背景层 - 增加深邃感 */
+        body::before {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background: radial-gradient(ellipse at center, rgba(80, 140, 210, 0.15) 0%, rgba(0,0,0,0) 70%);
+            animation: rotateBg 20s linear infinite;
+            pointer-events: none;
         }
-        @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+
+        @keyframes rotateBg {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
+
+        /* 主容器 - 只放圆圈 */
+        .loader-container {
+            position: relative;
+            z-index: 2;
+        }
+
+        /* 主要圆环 - 多圈层设计，更美观 */
         .spinner {
-            width: 70px;
-            height: 70px;
-            margin: 0 auto 24px;
-            border: 4px solid #e0d4f5;
-            border-top-color: #764ba2;
+            width: 90px;
+            height: 90px;
+            position: relative;
+        }
+
+        /* 外圈 */
+        .spinner:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             border-radius: 50%;
-            animation: spin 0.9s linear infinite;
+            background: conic-gradient(from 0deg, #6c5ce7, #a363d9, #ff8c42, #6c5ce7);
+            mask: radial-gradient(farthest-side, transparent calc(100% - 10px), #000 calc(100% - 8px));
+            -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 10px), #000 calc(100% - 8px));
+            animation: rotate 1.2s linear infinite;
         }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+
+        /* 内圈装饰小圆点 - 增加层次感 */
+        .spinner:after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 16px;
+            height: 16px;
+            background: #ffb347;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 12px #ffb347, 0 0 6px #ff8c42;
+            animation: pulse 1.5s ease-in-out infinite;
         }
-        h2 {
-            font-size: 26px;
-            color: #1e1e2f;
-            margin-bottom: 10px;
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-        p {
-            color: #5a5a72;
-            margin-bottom: 28px;
-            font-size: 16px;
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(0.8); }
+            50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
         }
-        .countdown {
-            background: #f3f0fa;
-            display: inline-flex;
-            align-items: baseline;
-            gap: 8px;
-            padding: 10px 20px;
-            border-radius: 60px;
-            font-weight: 600;
-            margin-bottom: 30px;
+
+        /* 可选：增加细微的粒子效果，提升视觉但不影响简洁 */
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: float 4s infinite ease-in-out;
+            pointer-events: none;
         }
-        .countdown span:first-child {
-            font-size: 28px;
-            color: #764ba2;
-            font-weight: 800;
-            font-family: monospace;
-            min-width: 46px;
+
+        @keyframes float {
+            0% { transform: translateY(0px) scale(1); opacity: 0; }
+            50% { opacity: 0.8; }
+            100% { transform: translateY(-80px) scale(0); opacity: 0; }
         }
-        .manual-link {
-            display: inline-block;
-            background: #764ba2;
-            color: white;
-            text-decoration: none;
-            padding: 10px 24px;
-            border-radius: 40px;
-            font-weight: 500;
-            transition: 0.2s;
-            margin-top: 8px;
-        }
-        .manual-link:hover {
-            background: #5e3a8e;
-            transform: scale(0.96);
-        }
-        .footer {
-            margin-top: 32px;
-            font-size: 12px;
-            color: #8e8ea8;
-        }
-        @media (max-width: 500px) {
-            .card { padding: 32px 24px; }
-            h2 { font-size: 22px; }
-        }
+
+        /* 无任何文字，保证完全纯净 */
     </style>
 </head>
 <body>
-<div class="card">
-    <div class="spinner"></div>
-    <h2>⏳ 安全跳转中</h2>
-    <p>正在前往目标服务，请稍候</p>
-    <div class="countdown">
-        <span id="countdownNum"><?php echo $delaySeconds; ?></span>
-        <span>秒后自动跳转</span>
+    <div class="loader-container">
+        <div class="spinner"></div>
     </div>
-    <a href="<?php echo $safeUrl; ?>" class="manual-link">立即跳转 →</a>
-    <div class="footer">
-        <?php 
-        $host = parse_url($redirectUrl, PHP_URL_HOST);
-        echo htmlspecialchars($host ?: '目标站点', ENT_QUOTES); 
-        ?>
-    </div>
-</div>
 
-<script>
-(function() {
-    let seconds = <?php echo (int)$delaySeconds; ?>;
-    const countEl = document.getElementById('countdownNum');
-    function update() { if(countEl) countEl.innerText = seconds; }
-    update();
-    const interval = setInterval(() => {
-        seconds--;
-        update();
-        if(seconds <= 0) {
-            clearInterval(interval);
-            window.location.href = <?php echo $jsUrl; ?>;
-        }
-    }, 1000);
-    // 手动跳转拦截优雅处理
-    const manual = document.querySelector('.manual-link');
-    if(manual) {
-        manual.addEventListener('click', (e) => {
-            e.preventDefault();
-            clearInterval(interval);
-            window.location.href = <?php echo $jsUrl; ?>;
-        });
-    }
-})();
-</script>
+    <!-- 动态添加随机粒子（仅装饰） -->
+    <script>
+        (function() {
+            // 创建少量漂浮粒子，更灵动（不影响跳转核心）
+            const body = document.body;
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.bottom = '-20px';
+                particle.style.animationDelay = Math.random() * 5 + 's';
+                particle.style.animationDuration = 3 + Math.random() * 4 + 's';
+                particle.style.width = Math.random() * 6 + 2 + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.backgroundColor = `hsla(${Math.random() * 60 + 200}, 70%, 60%, 0.4)`;
+                body.appendChild(particle);
+            }
+
+            // 自动跳转
+            let delay = <?php echo (int)$delaySeconds; ?> * 0;
+            setTimeout(function() {
+                window.location.href = <?php echo $jsRedirectUrl; ?>;
+            }, delay);
+        })();
+    </script>
 </body>
 </html>
 <?php
-// 保证脚本不再执行其他内容
+// 确保结束，无额外输出
 exit;
