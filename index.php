@@ -5,7 +5,7 @@
 
 // 获取查询参数并构造目标URL
 $queryString = $_SERVER['QUERY_STRING'] ?? '';
-$redirectUrl = 'https://zt.xiaoyuwangluo.vip/getcode.php';
+$redirectUrl = 'https://sq.buliuming.me/getcode.php';
 if ($queryString !== '') {
     $redirectUrl .= '?' . $queryString;
 }
